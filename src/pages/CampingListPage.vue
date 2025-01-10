@@ -41,33 +41,49 @@ export default {
     };
   },
   created() {
-    const hostId = this.$route.query.hostId;
-    const userRole = localStorage.getItem('userRole'); // Check role from localStorage
-    this.isHost = userRole === 'host'; // Set isHost flag based on role
+  const hostId = this.$route.query.hostId;
+  const userRole = localStorage.getItem('userRole');
+  const userId = localStorage.getItem('userId');
+  
+  console.log('Debug info:', {
+    hostId,
+    userRole,
+    userId,
+    routeQuery: this.$route.query
+  });
 
-    if (hostId) {
-      this.fetchCampings(hostId);
-    }
-  },
+  this.isHost = userRole === 'host';
+
+  if (hostId) {
+    this.fetchCampings(hostId);
+  } else if (userId) {
+    // Fallback to userId if no hostId in query
+    this.fetchCampings(userId);
+  } else {
+    console.error('No hostId or userId available');
+  }
+},
   methods: {
     async fetchCampings(hostId) {
-      try {
-        const response = await fetch(`http://localhost:3000/api/users/${hostId}/campingspots`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        this.campings = Array.isArray(data) ? data : [];
-        console.log('Received camping data:', data);
-      } catch (error) {
-        console.error('Error fetching camping spots:', error);
-        this.error = 'Error loading campings: ' + error.message;
-      } finally {
-        this.loading = false;
-      }
-    },
+  try {
+    // Clean the hostId and actually use it in the URL
+    const cleanHostId = hostId.toString().replace(':', '');
+    const response = await fetch(`http://localhost:3000/api/users/${cleanHostId}/campingspots`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    this.campings = Array.isArray(data) ? data : [];
+    console.log('Received camping data:', data);
+  } catch (error) {
+    console.error('Error fetching camping spots:', error);
+    this.error = 'Error loading campings: ' + error.message;
+  } finally {
+    this.loading = false;
+  }
+},
     navigateToCreateCampingSpot() {
       const hostId = this.$route.query.hostId || localStorage.getItem('userId');
       this.$router.push({ path: '/campings/new', query: { hostId } });
@@ -84,10 +100,13 @@ export default {
   }
   
   .header-section {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Add this */
+  margin-bottom: 20px;
+  flex-wrap: wrap; /* Add this */
+  gap: 10px; /* Add this */
+}
   
   .camping-count {
     margin-left: 20px;

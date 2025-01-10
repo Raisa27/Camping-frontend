@@ -1,34 +1,43 @@
 <template>
   <div class="filter-component">
     <h3>Filter</h3>
-    <div>
+    <div class="filter-group">
       <label>City or Village:</label>
-      <input type="text" v-model="filters.location" @input="applyFilters" />
+      <input 
+        type="text" 
+        v-model.trim="filters.location" 
+        @input="applyFilters" 
+        placeholder="Enter location..."
+      />
     </div>
-    <div>
-      <label>Coordinates:</label>
-      <input type="text" v-model="filters.coordinates" @input="applyFilters" />
-    </div>
-    <div>
-      <label>Price:</label>
+    
+    <div class="filter-group">
+      <label>Price Range:</label>
       <select v-model="filters.price" @change="applyFilters">
-        <option value="low">Low</option>
-        <option value="high">High</option>
+        <option value="">All Prices</option>
+        <option value="low">Under €50</option>
+        <option value="high">€50 and above</option>
       </select>
     </div>
-    <div>
-      <label>Amenities (comma-separated):</label>
-      <input type="text" v-model="filters.amenities" @input="applyFilters" />
+    
+    <div class="filter-group">
+      <label>Amenities:</label>
+      <input 
+        type="text" 
+        v-model.trim="filters.amenitiesInput" 
+        @input="handleAmenitiesInput"
+        placeholder="Enter amenities (comma-separated)"
+      />
     </div>
-    <div>
+    
+    <div class="filter-group">
       <label>Max Capacity:</label>
-      <input type="number" v-model="filters.maxCapacity" @input="applyFilters" />
-    </div>
-    <div>
-      <label>Rating:</label>
-      <select v-model="filters.rating" @change="applyFilters">
-        <option v-for="n in 5" :key="n" :value="n">{{ n }} stars</option>
-      </select>
+      <input 
+        type="number" 
+        v-model.number="filters.maxCapacity" 
+        @input="applyFilters"
+        min="1"
+      />
     </div>
   </div>
 </template>
@@ -39,24 +48,55 @@ export default {
   data() {
     return {
       filters: {
-        location: '',       // To filter by CityVillage
-        coordinates: '',    // To filter by Coordinates
+        location: '',
+        coordinates: '',
         price: '',
-        amenities: '',      // Input for comma-separated amenities
-        maxCapacity: '',
-        rating: '',
+        amenitiesInput: '',
+        amenities: [],
+        maxCapacity: null,
       },
     };
   },
   methods: {
+    handleAmenitiesInput() {
+      // Split amenities by comma and clean up the input
+      this.filters.amenities = this.filters.amenitiesInput
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+      this.applyFilters();
+    },
     applyFilters() {
-      // Emit amenities as an array after splitting by commas
-      const filtersWithAmenitiesArray = {
-        ...this.filters,
-        amenities: this.filters.amenities.split(',').map(a => a.trim().toLowerCase()),
-      };
-      this.$emit('filter', filtersWithAmenitiesArray);
+      this.$emit('filter', { ...this.filters });
     },
   },
 };
 </script>
+
+<style scoped>
+.filter-component {
+  padding: 1rem;
+}
+
+.filter-group {
+  margin-bottom: 1rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+input, select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #00B074;
+}
+</style>

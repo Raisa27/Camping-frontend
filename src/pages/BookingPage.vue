@@ -128,53 +128,53 @@
     },
     methods: {
       async handleBooking() {
-        try {
-
-          const userId = this.$route.query.userId || localStorage.getItem('userId');
+  try {
+    const userId = this.$route.query.userId || localStorage.getItem('userId');
     
     if (!userId) {
       throw new Error('User not authenticated');
     }
-          const bookingData = {
-            campingSpotId: this.campingSpotId,
-            startingDate: this.booking.startDate,
-            endDate: this.booking.endDate,
-            totalPrice: this.totalPrice,
-            numberOfGuests: this.booking.guests,
-            message: this.booking.message,
-            userId: userId,
-            spotName: this.spotName
-          };
-  
-          const response = await fetch('http://localhost:3000/api/reservations', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(bookingData)
-          });
-  
-          if (!response.ok) {
-            throw new Error('Failed to create booking');
-          }
 
-          // Redirect to profile page on success
-      this.$router.push({
-        name: 'ProfilePage',
-        query: { userId: userId, booking: 'success' }
-      });
-    } catch (error) {
-      this.error = error.message;
+    const bookingData = {
+      UserId: parseInt(userId),
+      CampingSpotId: parseInt(this.campingSpotId),
+      StartingDate: this.booking.startDate,
+      EndDate: this.booking.endDate,
+      TotalPrice: parseFloat(this.totalPrice),
+      NumberOfGuests: parseInt(this.booking.guests),
+      Message: this.booking.message || ''
+    };
+
+    console.log('Sending booking data:', bookingData); // Debug log
+
+    const response = await fetch('http://localhost:3000/api/reservations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(bookingData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Server error response:', errorData);
+      throw new Error(errorData.error || 'Failed to create booking');
     }
-  
-        //   this.$router.push({
-        //     name: 'CampingSpotDetails',
-        //     params: { id: this.campingSpotId }
-        //   });
-        // } catch (error) {
-        //   this.error = error.message;
-        // }
+
+    // Redirect to profile page with success message
+    this.$router.push({
+      path: '/profile',
+      query: { 
+        userId: userId,
+        booking: 'success',
+        role: localStorage.getItem('userRole')
       }
+    });
+  } catch (error) {
+    this.error = error.message;
+    console.error('Booking error:', error);
+  }
+}
     }
   }
   </script>

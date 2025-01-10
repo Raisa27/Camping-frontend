@@ -19,27 +19,29 @@
             />
           </div>
 
-          <!-- Booking Overview Section -->
           <div v-if="userInfo.role === 'camper'" class="card booking-section">
-            <h2>My Bookings</h2>
-            <div v-if="isLoadingBookings" class="loading-message">
-              <p>Loading bookings...</p>
-            </div>
-            <div v-else-if="bookingError" class="error-message">
-              <p>{{ bookingError }}</p>
-            </div>
-            <div v-if="bookings.length > 0" class="bookings-list">
-  <div v-for="booking in bookings" :key="booking.id" class="booking-card">
-    <h3>{{ booking.spotName }}</h3>
-    <p>Check-in: {{ formatDate(booking.startDate) }}</p>
-    <p>Check-out: {{ formatDate(booking.endDate) }}</p>
-    <p>Total Price: €{{ booking.totalPrice }}</p>
-    <p>Guests: {{ booking.numberOfGuests }}</p>
+  <h2>My Bookings</h2>
+  <div v-if="isLoadingBookings" class="loading-message">
+    <p>Loading bookings...</p>
   </div>
-</div>
-<div v-else class="empty-booking-message">
-  <p>No bookings found. Book your first adventure now!</p>
-</div>
+  <div v-else-if="bookingError" class="error-message">
+    <p>{{ bookingError }}</p>
+  </div>
+  <div v-else>
+    <div v-if="bookings.length > 0" class="bookings-list">
+      <div v-for="booking in bookings" :key="booking.ReservationId" class="booking-card">
+        <h3>{{ booking.spotName }}</h3>
+        <div class="booking-details">
+          <p><strong>Check-in:</strong> {{ formatDate(booking.StartingDate) }}</p>
+          <p><strong>Check-out:</strong> {{ formatDate(booking.EndDate) }}</p>
+          <p><strong>Total Price:</strong> €{{ booking.TotalPrice }}</p>
+        </div>
+      </div>
+    </div>
+    <div v-else class="empty-booking-message">
+      <p>No bookings found. Start your adventure by booking a camping spot!</p>
+    </div>
+  </div>
 
           </div>
 
@@ -230,33 +232,38 @@ export default {
       }
     },
     async fetchBookings(userId) {
-      this.isLoadingBookings = true;
-      this.bookingError = null;
-      
-      try {
-        const response = await fetch(`http://localhost:3000/api/users/${userId}/bookings`);
-        if (!response.ok) throw new Error('Failed to fetch bookings');
-        
-        const bookings = await response.json();
-        this.bookings = bookings.map(booking => ({
-          ...booking,
-          startDate: new Date(booking.startDate),
-          endDate: new Date(booking.endDate)
-        }));
-      } catch (error) {
-        this.bookingError = error.message;
-        console.error('Error fetching bookings:', error);
-        this.bookings = [];
-      } finally {
-        this.isLoadingBookings = false;
-      }
-    },
-    formatDate(date) {
-      return new Date(date).toLocaleDateString('nl-NL', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-      });
+  this.isLoadingBookings = true;
+  this.bookingError = null;
+  
+  try {
+    const response = await fetch(`http://localhost:3000/api/users/${userId}/bookings`);
+    if (!response.ok) throw new Error('Failed to fetch bookings');
+    
+    const bookings = await response.json();
+    console.log('Fetched bookings:', bookings); // Debug log
+    
+    this.bookings = bookings.map(booking => ({
+      ...booking,
+      startDate: new Date(booking.startDate),
+      endDate: new Date(booking.endDate),
+      totalPrice: parseFloat(booking.totalPrice).toFixed(2) // Ensure proper price formatting
+    }));
+  } catch (error) {
+    this.bookingError = error.message;
+    console.error('Error fetching bookings:', error);
+    this.bookings = [];
+  } finally {
+    this.isLoadingBookings = false;
+  }
+},
+    formatDate(dateString) {
+    if (!dateString) return 'Invalid Date';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('nl-NL', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
     },
     goToCampingSpots() {
       console.log('Navigating to campings with hostId:', this.userInfo.userId);
@@ -306,161 +313,171 @@ export default {
 </style>
 
   
-  <style scoped>
-  * {
-    font-family: Tahoma, sans-serif;
-  }
-  
+<style>
+/* General Styles */
+* {
+  font-family: Tahoma, sans-serif;
+}
+
+/* Buttons */
+.campings-button,
+.edit-button,
+.save-button,
+.homepage-button {
+  background-color: #00B074;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 4px;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.campings-button:hover,
+.edit-button:hover,
+.save-button:hover,
+.homepage-button:hover {
+  background-color: #009965;
+}
+
+/* Profile Container */
+.profile-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* Card Styling */
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+/* Welcome Banner */
+.welcome-banner {
+  text-align: center;
+  background-color: white;
+}
+
+.welcome-banner h1 {
+  color: #00B074;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+}
+
+.user-type {
+  color: #666;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+/* Profile Content */
+.profile-content {
+  margin-top: 2rem;
+}
+
+h2 {
+  color: #00B074;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+/* Inputs and Select Fields */
+input,
+select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #00B074;
+  box-shadow: 0 0 0 3px rgba(0, 176, 116, 0.1);
+}
+
+input:disabled,
+select:disabled {
+  background-color: #f8f8f8;
+  color: #666;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-button {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.cancel-button:hover {
+  background-color: #e5e5e5;
+}
+
+/* Additional Sections */
+.host-section,
+.admin-section {
+  margin-top: 2rem;
+}
+
+.host-section p,
+.admin-section p {
+  color: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
   .profile-container {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-  }
-  
-  .card {
-    background: white;
-    border-radius: 8px;
-    padding: 2rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    margin-bottom: 2rem;
-  }
-  
-  .welcome-banner {
-    text-align: center;
-    background-color: white;
-  }
-  
-  .welcome-banner h1 {
-    color: #00B074;
-    margin-bottom: 0.5rem;
-    font-size: 2rem;
-  }
-  
-  .user-type {
-    color: #666;
-    font-size: 1.1rem;
-    margin: 0;
-  }
-  
-  .profile-content {
-    margin-top: 2rem;
-  }
-  
-  h2 {
-    color: #00B074;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
-  }
-  
-  .form-group {
-    margin-bottom: 1.5rem;
-  }
-  
-  label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #333;
-    font-weight: normal;
-  }
-  
-  input, select {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
-    font-family: Tahoma, sans-serif;
-  }
-  
-  input:focus, select:focus {
-    outline: none;
-    border-color: #00B074;
-    box-shadow: 0 0 0 3px rgba(0, 176, 116, 0.1);
-  }
-  
-  input:disabled, select:disabled {
-    background-color: #f8f8f8;
-    color: #666;
-  }
-  
-  .action-buttons {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-  }
-  
-  button {
-    padding: 8px 16px;
-    border-radius: 4px;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    font-family: Tahoma, sans-serif;
-  }
-  
-  .edit-button, .save-button {
-    background-color: #00B074;
-    color: white;
-    flex: 1;
-  }
-  
-  .edit-button:hover, .save-button:hover {
-    background-color: #009965;
-  }
-  
-  .cancel-button {
-    background-color: #f1f1f1;
-    color: #333;
-    flex: 1;
-  }
-  
-  .cancel-button:hover {
-    background-color: #e5e5e5;
-  }
-  
-  .host-section, .admin-section {
-    margin-top: 2rem;
-  }
-  
-  .host-section p, .admin-section p {
-    color: #666;
-  }
-  
-  @media (max-width: 768px) {
-    .profile-container {
-      margin: 1rem auto;
-    }
-  
-    .card {
-      padding: 1.5rem;
-    }
-  
-    .action-buttons {
-      flex-direction: column;
-    }
-  
-    button {
-      width: 100%;
-    }
+    margin: 1rem auto;
   }
 
-  .homepage-button-container {
+  .card {
+    padding: 1.5rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
+}
+
+/* Homepage Button */
+.homepage-button-container {
   margin-top: 20px;
   text-align: center;
 }
 
-.homepage-button {
-  background-color: #00B074;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 4px;
-  text-decoration: none;
-  font-size: 16px;
-  transition: background-color 0.2s;
-}
-
-.homepage-button:hover {
-  background-color: #009965;
-}
-  </style>
+</style>

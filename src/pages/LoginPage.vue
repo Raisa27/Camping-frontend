@@ -34,48 +34,63 @@ export default {
   created() {
     console.log('LoginPage component has been created');
   },
-  methods: {
-    handleLogin() {
-      this.errorMessage = '';
+  //Replace your handleLogin method with this:
+methods: {
+  async handleLogin() {
+    this.errorMessage = '';
 
-      // Ensure fields are not empty
-      if (!this.email || !this.password) {
-        this.errorMessage = 'All fields are required.';
-        return;
+    // Ensure fields are not empty
+    if (!this.email || !this.password) {
+      this.errorMessage = 'All fields are required.';
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: this.email,
+          password: this.password
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Login failed');
       }
 
-      // Fetch user data from the API
-      fetch('http://localhost:3000/api/users')
-        .then(response => response.json())
-        .then(users => {
-          // Find a matching user based on email and password
-          const user = users.find(u => u.Email === this.email && u.Password === this.password);
+      const userData = await response.json();
+      const role = this.userRoles[userData.userTypeId];
 
-          if (user) {
-            const role = this.userRoles[user.UserTypeId];
-
-            if (role) {
-              alert(`Welcome ${role.charAt(0).toUpperCase() + role.slice(1)}!`);
-              this.$router.push({
-                path: '/profile',
-                query: {
-                  email: this.email,
-                  role: role,
-                  userId: user.UserId 
-                }
-              });
-            } else {
-              this.errorMessage = 'Invalid role. Please contact support.';
-            }
-          } else {
-            this.errorMessage = 'Invalid credentials. Please try again.';
+      if (role) {
+        // Store user data in localStorage
+        localStorage.setItem('userRole', role);
+        localStorage.setItem('userId', userData.userId);
+        localStorage.setItem('email', userData.email);
+        
+        // Welcome message
+        alert(`Welcome ${role.charAt(0).toUpperCase() + role.slice(1)}!`);
+        
+        // Navigate to profile page
+        this.$router.push({
+          path: '/profile',
+          query: {
+            email: userData.email,
+            role: role,
+            userId: userData.userId
           }
-        })
-        .catch(error => {
-          console.error('Error fetching users:', error);
-          this.errorMessage = 'An error occurred while logging in. Please try again later.';
         });
+      } else {
+        this.errorMessage = 'Invalid role. Please contact support.';
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      this.errorMessage = error.message || 'An error occurred while logging in. Please try again later.';
     }
+  }
   }
 };
 </script>

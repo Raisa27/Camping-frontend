@@ -92,33 +92,33 @@ export default {
   });
 }
 ,
-    async fetchCampingSpots() {
-      this.loading = true;
-      try {
-        const response = await fetch('http://localhost:3000/api/campingspots');
-        if (!response.ok) {
-          throw new Error('Failed to fetch camping spots');
-        }
-        const data = await response.json();
-        this.campingSpots = data.map(spot => ({
-          id: spot.CampingSpotId,
-          name: spot.Name,
-          location: spot.CityVillage,
-          coordinates: spot.Coordinates,
-          description: spot.Description,
-          capacity: spot.MaxCapacity,
-          price: spot.PricePerNight,
-          amenities: spot.AmenitiesId,
-          imageUrl: this.getImageUrlForSpot(spot.Name) // Use the correct case for `Name`
-        }));
-        this.filteredSpots = [...this.campingSpots];
-      } catch (error) {
-        console.error('Error fetching camping spots:', error);
-        this.error = 'Failed to load camping spots';
-      } finally {
-        this.loading = false;
-      }
-    },
+async fetchCampingSpots() {
+  this.loading = true;
+  try {
+    const response = await fetch('http://localhost:3000/api/campingspots');
+    if (!response.ok) {
+      throw new Error('Failed to fetch camping spots');
+    }
+    const data = await response.json();
+    this.campingSpots = data.map(spot => ({
+      id: spot.CampingSpotId,
+      name: spot.Name,
+      location: spot.CityVillage,
+      coordinates: spot.Coordinates,
+      description: spot.Description,
+      capacity: spot.MaxCapacity,
+      price: spot.PricePerNight,
+      amenities: spot.AmenitiesName, // Use the amenities name instead of ID
+      imageUrl: this.getImageUrlForSpot(spot.Name)
+    }));
+    this.filteredSpots = [...this.campingSpots];
+  } catch (error) {
+    console.error('Error fetching camping spots:', error);
+    this.error = 'Failed to load camping spots';
+  } finally {
+    this.loading = false;
+  }
+},
 
     getImageUrlForSpot(spotName) {
       const imageMappings = {
@@ -141,16 +141,36 @@ export default {
     },
 
     handleFilters(filters) {
-      this.filteredSpots = this.campingSpots.filter(spot => {
-        return (
-          (!filters.location || spot.location.toLowerCase().includes(filters.location.toLowerCase())) &&
-          (!filters.coordinates || spot.coordinates.toLowerCase().includes(filters.coordinates.toLowerCase())) &&
-          (!filters.price || (filters.price === 'low' ? spot.price < 50 : spot.price >= 50)) &&
-          (!filters.amenities || spot.amenities == filters.amenities) &&
-          (!filters.maxCapacity || spot.capacity <= filters.maxCapacity)
-        );
-      });
-    },
+  this.filteredSpots = this.campingSpots.filter(spot => {
+    // Location filter
+    const locationMatch = !filters.location || 
+      spot.location.toLowerCase().includes(filters.location.toLowerCase());
+
+    // Coordinates filter
+    const coordinatesMatch = !filters.coordinates || 
+      spot.coordinates.toLowerCase().includes(filters.coordinates.toLowerCase());
+
+    // Price filter
+    const priceMatch = !filters.price || 
+      (filters.price === 'low' ? spot.price < 50 : spot.price >= 50);
+
+    // Amenities filter
+    const amenitiesMatch = !filters.amenities.length || 
+      filters.amenities.some(amenity => 
+        spot.amenities?.toLowerCase().includes(amenity.toLowerCase())
+      );
+
+    // Capacity filter
+    const capacityMatch = !filters.maxCapacity || 
+      spot.capacity <= parseInt(filters.maxCapacity);
+
+    return locationMatch && 
+           coordinatesMatch && 
+           priceMatch && 
+           amenitiesMatch && 
+           capacityMatch;
+  });
+},
   }
 };
 </script>
