@@ -1,0 +1,21 @@
+.homepage {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .main-content {
+    display: flex;
+    flex: 1;
+    padding: 20px;
+    gap: 20px;
+  }
+  
+  .filter {
+    width: 250px;
+    flex-shrink: 0;
+  }
+  
+  .camping-spots {
+    flex: 1;
+  }
